@@ -11,7 +11,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
-from math import atan2
+from math import atan2, fmod, pi
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Point
 ################################################################################################################
@@ -96,7 +96,7 @@ class Genetic:
         self.maze_size = maze.shape[0]
         self.population = []
         self.move = [ [0, -1], [-1, 0], [0, 1], [1, 0]]
-        self.leng_ind = int(self.maze_size)
+        self.leng_ind = int(self.maze_size*2)
         print("Leng_ind: %d" % self.leng_ind)
         
     def create_population(self):
@@ -338,20 +338,23 @@ def go_to_goal():
 
         angle_to_goal = atan2(inc_y, inc_x)
         two_point_distance_to_goal = np.sqrt(inc_x*inc_x + inc_y*inc_y)
-        angle_difference = angle_to_goal - curr_state[2] # temp angle state /// curr_state[2] is yaw
+        theta = curr_state[2]
+        anglediff = fmod((angle_to_goal - theta), 2*pi)
+
+        if (anglediff < 0.0):
+            if (abs(anglediff) > (2*pi + anglediff)):
+                anglediff = 2*pi + anglediff
+        else:
+            if (anglediff > abs(anglediff - 2*pi)):
+                anglediff = anglediff - 2*pi
 
         if(two_point_distance_to_goal >= 0.05):
-            if abs(angle_to_goal - curr_state[2]) > 0.1:
-                scale = 1.5
-                dir = (angle_to_goal - curr_state[2]) / abs(angle_to_goal - curr_state[2])
-                angSpeed = min(0.5, abs(angle_to_goal - curr_state[2]) / scale)
+            if abs(anglediff) > 0.1:
                 msg.linear.x = 0.0
-                msg.angular.z = dir * angSpeed
+                msg.angular.z = anglediff
                 vel_pub.publish(msg)
             else:
-                distance = np.sqrt(pow(goal.x-curr_state[0], 2) + pow(goal.y-curr_state[1], 2))
-                #rospy.loginfo(distance)
-                msg.linear.x = forward_speed
+                msg.linear.x = min(forward_speed, two_point_distance_to_goal)
                 msg.angular.z = 0.0
                 vel_pub.publish(msg)
         else:
@@ -368,7 +371,7 @@ def go_to_goal():
       print("Time for robot to get to the final node                                  : "+str(round(t2, 6)))
       print("Overall time for robot to find the optimal path and get to the final node: "+str(round(t_all, 6)))
       print("Optimal path length                                                      : "+str(len(path)))
-      #plt.show()
+      plt.show()
       path_done = 1
       pass
 
@@ -456,14 +459,22 @@ def main():
     for i in result.path:
         act_node = path[-1]
         path.append([act_node[0] + next_move[i][0], act_node[1] + next_move[i][1]])
-    print(path)
+    
+
+    for j in range(3):
+        for i in range(1, len(path)-1):
+            if path[i] == path[-1]:
+                break
+            if path[i-1] == path[i+1]:
+                del path[i]
+                del path[i]
 
     temp = []
     for i in path:
-        if i[::-1] not in path:
-            temp.append(i[::-1])
+        temp.append(i[::-1])
     path = temp
     print(path)
+    print(len(path))
 
     t1 = rospy.Time.now().to_sec() - t0 #handling the time for executing the algorithm to find the optimal path
 
@@ -486,7 +497,6 @@ def main():
     plt.plot(orig_start[0], orig_start[1], 'ro', markersize=15, label="start node")
     plt.plot(orig_end[0], orig_end[1], 'bo', markersize=15, label="end node")
     plt.legend()
-    plt.show()
     #######################################################################
     #######################################################################
 
