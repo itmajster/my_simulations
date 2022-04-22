@@ -226,11 +226,13 @@ def go_to_goal(xx, yy):
 	msg.angular.z = 0.0
 	pub.publish(msg)		#stop the robot
 
-	if int(curr_state[0]) == end[0] and int(curr_state[1]) == end[1]:
+	if round(curr_state[0]) == end[0] and round(curr_state[1]) == end[1]:
 		path.append(end)
 		path_done = 1
 	else:
-		path.append((int(curr_state[0]), int(curr_state[1])))
+		tmp = []
+		tmp = (round(curr_state[0]), round(curr_state[1]))
+		path.append(tmp)
 
 '''
 Function: heading: This function calls function for the logic based on the robot states.
@@ -238,6 +240,8 @@ Function: heading: This function calls function for the logic based on the robot
 
 def heading_east_movement():
 	global heading, moved_ahead, curr_state, left, front, right, a, back, wall_found
+	print("-------------------------------------------------")
+	print('heading east')
 	print("sensor left, front, right, back, moved_ahead, heading")
 	print(left, front, right, back, moved_ahead, heading)
 	print("current state: "+str(curr_state[0]), str(curr_state[1]))
@@ -307,9 +311,11 @@ def heading_east_movement():
 
 def heading_south_movement():
 	global heading, moved_ahead, curr_state, left, front, right, back, a, wall_found
+	print("-------------------------------------------------")
 	print('heading south')
+	print("sensor left, front, right, back, moved_ahead, heading")
 	print(left, front, right, back, moved_ahead, heading)
-	print(curr_state)
+	print("current state: "+str(curr_state[0]), str(curr_state[1]))
 
 	if left < a or front < a or right < a:
 		wall_found == 1
@@ -389,10 +395,11 @@ def heading_south_movement():
 
 def heading_west_movement():
 	global heading, moved_ahead, curr_state, left, front, right, a, back, wall_found
+	print("-------------------------------------------------")
 	print('heading west')
-	print(left, front, right, moved_ahead, heading)
-	print(curr_state)
-
+	print("sensor left, front, right, back, moved_ahead, heading")
+	print(left, front, right, back, moved_ahead, heading)
+	print("current state: "+str(curr_state[0]), str(curr_state[1]))
 	if left < a or front < a or right < a:
 		wall_found == 1
 	elif wall_found == 0:
@@ -458,9 +465,11 @@ def heading_west_movement():
 
 def heading_north_movement():
 	global heading, moved_ahead, curr_state, left, front, right, a, back, wall_found
+	print("-------------------------------------------------")
 	print('heading north')
-	print(left, front, right, moved_ahead, heading)
-	print(curr_state)
+	print("sensor left, front, right, back, moved_ahead, heading")
+	print(left, front, right, back, moved_ahead, heading)
+	print("current state: "+str(curr_state[0]), str(curr_state[1]))
 
 	if left < a or front < a or right < a:
 		wall_found == 1
@@ -469,24 +478,24 @@ def heading_north_movement():
 	
 	if wall_found == 1:
 		if left > a and moved_ahead == 1:	#turn left and move on...outter corner
-			go_to_goal(round(curr_state[0] - 1), round(curr_state[1]))
 			heading = 'w'
+			go_to_goal(round(curr_state[0] - 1), round(curr_state[1]))
 			moved_ahead = 0	
 		elif left < a and front > a:		#go ahead
 			go_to_goal(round(curr_state[0]), round(curr_state[1] + 1))
 			moved_ahead = 1
 		elif front < a and right > a:		#turn right
+			heading = 'e'
 			go_to_goal(round(curr_state[0] + 1), round(curr_state[1]))
 			moved_ahead = 1
-			heading = 'e'
 		elif front < a and right < a and back < a:	#turn left
+			heading = 'w'
 			go_to_goal(round(curr_state[0] - 1), round(curr_state[1]))
 			moved_ahead = 1
-			heading = 'w'
 		elif (front < a or front > a) and right < a:		#turn around
+			heading = 's'
 			go_to_goal(round(curr_state[0]), round(curr_state[1] - 1))
 			moved_ahead = 1
-			heading = 's'
 			
 
 
@@ -580,7 +589,7 @@ def main():
 	wall_found = 0
 
 	path_done = 0		#stamp for path done...0 = not in the goal...1 = in the goal
-	start = (int(curr_state[0]), int(curr_state[1]))
+	start = (round(curr_state[0]), round(curr_state[1]))
 	path = []
 	path.append(start)
 
@@ -625,8 +634,9 @@ def main():
 		else:
 			print("Robot came to the final node")
 			t_all = rospy.Time.now().to_sec() - t0
-			print("Overall time for robot to find the optimal path and get to the final node: "+str(t_all))
-			print("Optimal path length                                                      : "+str(len(path)))
+			print("Overall time for robot to find the optimal path and get to the final node: "+str(round(t_all, 4)))
+			print("Optimal path length                                                      : "+str(len(path) - 1))
+			print(path)
 			plt.show()
 
 	rospy.spin()
