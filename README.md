@@ -1,4 +1,4 @@
-# Implementation of Path Finding Algorithm in Gazebo Simulation
+# Implementation of Path Finding Algorithms in Gazebo Simulation
 
 1. Wall follower algorithm
 2. Flood fill algorithm
